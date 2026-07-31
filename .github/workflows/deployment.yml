@@ -19,12 +19,16 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: Set lowercase Docker image name
+        run: |
+          echo "IMAGE_NAME=$(echo '${{ secrets.DOCKERHUB_USERNAME }}/my-python-app:latest' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/my-python-app:latest
+          tags: ${{ env.IMAGE_NAME }}
 
       - name: Deploy to EC2 via SSH
         uses: appleboy/ssh-action@v1.0.3
@@ -33,11 +37,12 @@ jobs:
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/my-python-app:latest
+            IMAGE_NAME=$(echo '${{ secrets.DOCKERHUB_USERNAME }}/my-python-app:latest' | tr '[:upper:]' '[:lower:]')
+            docker pull $IMAGE_NAME
             docker stop my-python-app || true
             docker rm my-python-app || true
             docker run -d \
               --name my-python-app \
               -p 80:8000 \
               --restart always \
-              ${{ secrets.DOCKERHUB_USERNAME }}/my-python-app:latest
+              $IMAGE_NAME
