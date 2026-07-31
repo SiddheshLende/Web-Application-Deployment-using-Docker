@@ -1,4 +1,4 @@
-name: Build, Push, and Deploy to EC2
+name: Deploy Python App to AWS EC2
 
 on:
   push:
@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Log in to Docker Hub
@@ -19,42 +19,30 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      - name: Set lowercase Docker image name
+        run: |
+          echo "IMAGE_NAME=$(echo '${{ secrets.DOCKERHUB_USERNAME }}/my-python-app:latest' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
 
-      - name: Build and Push Docker Image
+      - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/streamlit-portfolio:latest
+          tags: ${{ env.IMAGE_NAME }}
 
-      - name: SSH and Deploy to AWS EC2
+      - name: Deploy to EC2 via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            # Install Docker on EC2 if missing
-            if ! command -v docker &> /dev/null; then
-                sudo apt-get update && sudo apt-get install -y docker.io
-                sudo systemctl start docker
-                sudo systemctl enable docker
-                sudo usermod -aG docker $USER
-            fi
-
-            # Login to Docker Hub
-            echo "${{ secrets.DOCKERHUB_TOKEN }}" | sudo docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
-
-            # Stop and remove existing container if running
-            sudo docker stop streamlit-app || true
-            sudo docker rm streamlit-app || true
-
-            # Pull latest image and run container
-            sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/streamlit-portfolio:latest
-            sudo docker run -d \
-              --name streamlit-app \
-              --restart unless-stopped \
-              -p 80:8501 \
-              ${{ secrets.DOCKERHUB_USERNAME }}/streamlit-portfolio:latest
+            IMAGE_NAME=$(echo '${{ secrets.DOCKERHUB_USERNAME }}/my-python-app:latest' | tr '[:upper:]' '[:lower:]')
+            docker pull $IMAGE_NAME
+            docker stop my-python-app || true
+            docker rm my-python-app || true
+            docker run -d \
+              --name my-python-app \
+              -p 80:8000 \
+              --restart always \
+              $IMAGE_NAME
