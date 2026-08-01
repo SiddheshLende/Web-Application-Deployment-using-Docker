@@ -3,7 +3,7 @@ import streamlit as st
 # Page setup
 st.set_page_config(
     page_title="Portfolio | Cloud & Python Engineer....",
-    page_icon="⚡",
+    page_icon=":material/bolt:",
     layout="wide",
 )
 
@@ -21,7 +21,7 @@ with col1:
         """
     )
     
-    st.markdown("📬 **Contact:** `your.email@example.com` | [GitHub](https://github.com) | [LinkedIn](https://linkedin.com)")
+    st.markdown(":material/mail: **Contact:** `your.email@example.com` | [GitHub](https://github.com) | [LinkedIn](https://linkedin.com)")
 
 with col2:
     st.metric(label="Primary Stack", value="Python & AWS")
@@ -30,7 +30,7 @@ with col2:
 st.divider()
 
 # --- TECH STACK SECTION ---
-st.subheader("🛠️ Technical Skills")
+st.subheader(":material/build: Technical Skills")
 
 sk1, sk2, sk3 = st.columns(3)
 
@@ -88,7 +88,7 @@ with tab2:
 st.divider()
 
 # --- INTERACTIVE CONTACT FORM ---
-st.subheader("💬 Get in Touch")
+st.subheader(":material/chat: Get in Touch")
 
 with st.form("contact_form"):
     name = st.text_input("Your Name")
