@@ -11,7 +11,7 @@ st.set_page_config(
 col1, col2 = st.columns([2, 1])
 
 with col1:
-    st.title("Software & Cloud Engineer")
+    st.title("Cloud Engineer")
     st.caption("Specializing in Python Web Applications, Docker, & Cloud Infrastructure")
     
     st.write(
