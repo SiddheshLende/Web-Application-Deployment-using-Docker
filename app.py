@@ -61,7 +61,7 @@ with sk3:
 st.divider()
 
 # --- PROJECTS SECTION ---
-st.subheader("🚀 Featured Projects")
+st.subheader("Projects")
 
 tab1, tab2 = st.tabs(["3-Tier Web Application", "Automated CI/CD Pipeline"])
 
