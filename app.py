@@ -2,7 +2,7 @@ import streamlit as st
 
 # Page setup
 st.set_page_config(
-    page_title="Portfolio | Cloud & Python Engineer!",
+    page_title="Portfolio | Cloud & Python Engineer....",
     page_icon="⚡",
     layout="wide",
 )
