@@ -1,4 +1,4 @@
-name: Deploy Python App to AWS EC2
+name: CI/CD Deployment Pipeline
 
 on:
   push:
@@ -10,39 +10,45 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      # Step 1: Check out code from GitHub repository
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
+      # Step 2: Log in to Docker Hub
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Set lowercase Docker image name
-        run: |
-          echo "IMAGE_NAME=$(echo '${{ secrets.DOCKERHUB_USERNAME }}/my-python-app:latest' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
-
-      - name: Build and push Docker image
+      # Step 3: Build and push Docker image to Docker Hub
+      - name: Build and Push Docker Image
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
-          tags: ${{ env.IMAGE_NAME }}
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/streamlit-portfolio:latest
 
-      - name: Deploy to EC2 via SSH
+      # Step 4: Deploy to AWS EC2 via SSH
+      - name: Deploy to EC2
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            IMAGE_NAME=$(echo '${{ secrets.DOCKERHUB_USERNAME }}/my-python-app:latest' | tr '[:upper:]' '[:lower:]')
-            docker pull $IMAGE_NAME
-            docker stop my-python-app || true
-            docker rm my-python-app || true
-            docker run -d \
-              --name my-python-app \
-              -p 80:8000 \
-              --restart always \
-              $IMAGE_NAME
+            # Ensure Docker is installed and running
+            sudo systemctl start docker
+
+            # Log in to Docker Hub on EC2
+            sudo docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" -p "${{ secrets.DOCKERHUB_TOKEN }}"
+
+            # Stop and remove existing container if running
+            sudo docker stop portfolio-app || true
+            sudo docker rm portfolio-app || true
+
+            # Pull latest image from Docker Hub
+            sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/streamlit-portfolio:latest
+
+            # Run new container
+            sudo docker run -d --name portfolio-app --restart always -p 80:8501 ${{ secrets.DOCKERHUB_USERNAME }}/streamlit-portfolio:latest
